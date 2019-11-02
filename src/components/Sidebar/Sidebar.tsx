@@ -41,18 +41,13 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
 
   return (
     <animated.div
-      className="absolute top-0 left-0 h-full text-white py-12 px-6"
+      className="fixed top-0 left-0 h-full text-white py-12 px-6 overflow-x-scroll overflow-y-scroll scrolling-touch"
       style={{
         ...style,
         backgroundColor: "#121212"
       }}
     >
-      <button
-        className="mb-16"
-        onClick={() => {
-          toggleSidebar();
-        }}
-      >
+      <button className="mb-16" onClick={() => toggleSidebar()}>
         Close
       </button>
 
@@ -71,6 +66,30 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
       <Section
         isOpen={!closedSections["4"]}
         toggleSection={toggleSection("4")}
+      />
+      <Section
+        isOpen={!closedSections["5"]}
+        toggleSection={toggleSection("5")}
+      />
+      <Section
+        isOpen={!closedSections["6"]}
+        toggleSection={toggleSection("6")}
+      />
+      <Section
+        isOpen={!closedSections["7"]}
+        toggleSection={toggleSection("7")}
+      />
+      <Section
+        isOpen={!closedSections["8"]}
+        toggleSection={toggleSection("8")}
+      />
+      <Section
+        isOpen={!closedSections["9"]}
+        toggleSection={toggleSection("9")}
+      />
+      <Section
+        isOpen={!closedSections["10"]}
+        toggleSection={toggleSection("10")}
       />
     </animated.div>
   );
