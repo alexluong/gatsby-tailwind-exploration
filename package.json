@@ -19,9 +19,11 @@
     "immer": "^5.0.0",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
-    "react-spring": "^8.0.27",
+    "react-spring": "^9.0.0-beta.34",
     "react-use": "^12.10.0",
-    "use-immer": "^0.3.4"
+    "use-immer": "^0.3.4",
+    "xstate": "^4.6.7",
+    "zustand": "^2.2.1"
   },
   "devDependencies": {
     "tailwindcss": "^1.1.3"
