@@ -1,46 +1,98 @@
 import React from "react";
 import create from "zustand";
 import { animated, AnimatedProps } from "react-spring";
+import { useDrag } from "react-use-gesture";
+import { useLocalStorage, useMount, useWindowSize } from "react-use";
 import { persist, immer } from "../../utils/zustand";
 import Section from "./Section";
 
+const LS_KEY = "sidebarState";
+const DEFAULT_WIDTH = 280;
+const V_THRESHOLD = 0.15; // velocity --> how fast the swipe is
+const D_THRESHOLD = 0.6; // direction --> how straight the swipe is
+
 interface SidebarState {
+  isMobile: boolean;
+  sidebarWidth: number;
   isOpen: boolean;
   closedSections: {
     [key: string]: boolean;
   };
   toggleSidebar: () => void;
   toggleSection: (id: string) => () => void;
+  useDragSidebar: () => any;
+  useDragMain: () => any;
+  useSidebarLayout: () => any;
 }
 
-const persistedState =
-  typeof window === "undefined"
-    ? null
-    : JSON.parse(localStorage.getItem("sidebarState"));
-
 const [useSidebar] = create<SidebarState>(
-  persist(
-    immer(set => ({
-      isOpen: persistedState ? persistedState.isOpen : true,
-      closedSections: persistedState ? persistedState.closedSections : {},
+  persist(LS_KEY)(
+    immer((set, get) => ({
+      isMobile: true,
+      sidebarWidth: 0,
+      isOpen: false,
+      closedSections: {},
       toggleSidebar: () => {
-        set((state: SidebarState) => void (state.isOpen = !state.isOpen));
+        set((state: SidebarState) => {
+          state.isOpen = !state.isOpen;
+        });
       },
       toggleSection: (id: string) => () => {
-        set(
-          (state: SidebarState) =>
-            void (state.closedSections[id] = !state.closedSections[id])
-        );
+        set((state: SidebarState) => {
+          state.closedSections[id] = !state.closedSections[id];
+        });
+      },
+      useSidebarLayout: () => {
+        const [persistedState] = useLocalStorage<SidebarState>(LS_KEY);
+        const { width } = useWindowSize();
+        const isMobile = width < 500;
+
+        useMount(() => {
+          set((state: SidebarState) => {
+            state.sidebarWidth = isMobile ? width : DEFAULT_WIDTH;
+            state.isMobile = isMobile;
+            state.isOpen = persistedState.isOpen;
+            state.closedSections = persistedState.closedSections;
+          });
+        });
+      },
+      useDragSidebar: () => {
+        return useDrag(({ direction, velocity, last }) => {
+          if (direction[0] < -D_THRESHOLD && last && velocity > V_THRESHOLD) {
+            get().toggleSidebar();
+          }
+        });
+      },
+      useDragMain: () => {
+        return useDrag(({ direction, velocity, last }) => {
+          if (direction[0] > D_THRESHOLD && last && velocity > V_THRESHOLD) {
+            get().toggleSidebar();
+          }
+        });
       }
     }))
   )
 );
 
 function Sidebar({ style }: AnimatedProps<{ style: object }>) {
-  const { closedSections, toggleSidebar, toggleSection } = useSidebar();
+  const {
+    closedSections,
+    toggleSidebar,
+    toggleSection,
+    useDragSidebar
+  } = useSidebar();
+
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, [isClient, setIsClient]);
+
+  const bindSidebar = useDragSidebar();
 
   return (
     <animated.div
+      {...bindSidebar()}
       className="fixed top-0 left-0 h-full text-white py-12 px-6 overflow-x-scroll overflow-y-scroll scrolling-touch"
       style={{
         ...style,
@@ -50,6 +102,8 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
       <button className="mb-16" onClick={() => toggleSidebar()}>
         Close
       </button>
+
+      {/* <pre>{JSON.stringify(s, null, 4)}</pre> */}
 
       <Section
         isOpen={!closedSections["1"]}
@@ -96,4 +150,4 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
 }
 
 export default Sidebar;
-export { useSidebar };
+export { Sidebar, useSidebar };

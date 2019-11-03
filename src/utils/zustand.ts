@@ -2,11 +2,11 @@ import produce from "immer";
 
 const isBrowser = typeof window !== "undefined";
 
-export const persist = config => (set, get, api) =>
+export const persist = (LS_KEY: string) => config => (set, get, api) =>
   config(
     args => {
       set(args);
-      isBrowser && localStorage.setItem("sidebarState", JSON.stringify(get()));
+      isBrowser && localStorage.setItem(LS_KEY, JSON.stringify(get()));
     },
     get,
     api

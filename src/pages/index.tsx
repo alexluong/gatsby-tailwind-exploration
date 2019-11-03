@@ -1,35 +1,43 @@
 import React from "react";
-import { useSpring, animated } from "react-spring";
-import { useWindowSize } from "react-use";
+import { useSpring, animated, to } from "react-spring";
 import Sidebar, { useSidebar } from "../components/Sidebar";
 
-const DEFAULT_WIDTH = 280;
+function IndexPage() {
+  const {
+    isOpen,
+    isMobile,
+    sidebarWidth,
+    toggleSidebar,
+    useDragMain,
+    useSidebarLayout
+  } = useSidebar();
 
-const IndexPage = () => {
-  const { isOpen, toggleSidebar } = useSidebar();
-  const { width } = useWindowSize();
-
-  const isMobile = width < 500;
-  const sidebarWidth = isMobile ? width : DEFAULT_WIDTH;
+  useSidebarLayout();
 
   // Animation
-  const sidebarStyle = useSpring({
-    translate: [isOpen ? 0 : -sidebarWidth]
+  const { translate } = useSpring({
+    translate: [isOpen ? 0 : -100]
   });
-  const mainStyle = useSpring(
-    isMobile ? {} : { marginLeft: isOpen ? sidebarWidth : 0 }
-  );
+  const { marginLeft } = useSpring({
+    marginLeft: isMobile ? 0 : isOpen ? sidebarWidth : 0
+  });
+
+  const bindMain = useDragMain();
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative overflow-x-hidden">
       <Sidebar
         style={{
           width: sidebarWidth,
-          ...sidebarStyle
+          transform: to(translate, x => `translateX(${x}%)`)
         }}
       />
 
-      <animated.div className="flex-1 p-16" style={mainStyle}>
+      <animated.div
+        {...(isMobile ? bindMain() : {})}
+        className="flex-1 p-16"
+        style={{ marginLeft }}
+      >
         <p className="text-teal-600">Hello, World!</p>
         <button
           className="btn btn-primary"
@@ -43,6 +51,6 @@ const IndexPage = () => {
       </animated.div>
     </div>
   );
-};
+}
 
 export default IndexPage;
