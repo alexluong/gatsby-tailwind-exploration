@@ -1,26 +1,21 @@
 import React from "react";
-import { useSpring, animated, to } from "react-spring";
+import { animated } from "react-spring";
 import Sidebar, { useSidebar } from "../components/Sidebar";
 
 function IndexPage() {
   const {
-    isOpen,
     isMobile,
     sidebarWidth,
     toggleSidebar,
     useDragMain,
-    useSidebarLayout
+    useSidebarLayout,
+    useSidebarStyle,
+    useMainStyle
   } = useSidebar();
 
   useSidebarLayout();
-
-  // Animation
-  const { translate } = useSpring({
-    translate: [isOpen ? 0 : -100]
-  });
-  const { marginLeft } = useSpring({
-    marginLeft: isMobile ? 0 : isOpen ? sidebarWidth : 0
-  });
+  const sidebarStyle = useSidebarStyle();
+  const mainStyle = useMainStyle();
 
   const bindMain = useDragMain();
 
@@ -29,14 +24,14 @@ function IndexPage() {
       <Sidebar
         style={{
           width: sidebarWidth,
-          transform: to(translate, x => `translateX(${x}%)`)
+          ...sidebarStyle
         }}
       />
 
       <animated.div
         {...(isMobile ? bindMain() : {})}
         className="flex-1 p-16"
-        style={{ marginLeft }}
+        style={mainStyle}
       >
         <p className="text-teal-600">Hello, World!</p>
         <button

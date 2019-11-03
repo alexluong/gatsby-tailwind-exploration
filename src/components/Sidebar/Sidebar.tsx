@@ -1,7 +1,7 @@
 import React from "react";
 import create from "zustand";
-import { animated, AnimatedProps } from "react-spring";
 import { useDrag } from "react-use-gesture";
+import { useSpring, animated, AnimatedProps, to } from "react-spring";
 import { useLocalStorage, useMount, useWindowSize } from "react-use";
 import { persist, immer } from "../../utils/zustand";
 import Section from "./Section";
@@ -23,6 +23,8 @@ interface SidebarState {
   useDragSidebar: () => any;
   useDragMain: () => any;
   useSidebarLayout: () => any;
+  useSidebarStyle: () => any;
+  useMainStyle: () => any;
 }
 
 const [useSidebar] = create<SidebarState>(
@@ -40,6 +42,20 @@ const [useSidebar] = create<SidebarState>(
       toggleSection: (id: string) => () => {
         set((state: SidebarState) => {
           state.closedSections[id] = !state.closedSections[id];
+        });
+      },
+      useSidebarStyle: () => {
+        const { translate } = useSpring({
+          translate: [get().isOpen ? 0 : -100]
+        });
+        return {
+          transform: to(translate, x => `translateX(${x}%)`)
+        };
+      },
+      useMainStyle: () => {
+        const { isMobile, isOpen, sidebarWidth } = get();
+        return useSpring({
+          marginLeft: isMobile ? 0 : isOpen ? sidebarWidth : 0
         });
       },
       useSidebarLayout: () => {
@@ -82,12 +98,6 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
     useDragSidebar
   } = useSidebar();
 
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, [isClient, setIsClient]);
-
   const bindSidebar = useDragSidebar();
 
   return (
@@ -102,8 +112,6 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
       <button className="mb-16" onClick={() => toggleSidebar()}>
         Close
       </button>
-
-      {/* <pre>{JSON.stringify(s, null, 4)}</pre> */}
 
       <Section
         isOpen={!closedSections["1"]}
