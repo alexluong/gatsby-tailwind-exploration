@@ -4,7 +4,6 @@ import { useDrag } from "react-use-gesture";
 import { useSpring, animated, AnimatedProps, to } from "react-spring";
 import { useLocalStorage, useMount, useWindowSize } from "react-use";
 import { persist, immer } from "../../utils/zustand";
-import Section from "./Section";
 
 const LS_KEY = "sidebarState";
 const DEFAULT_WIDTH = 280;
@@ -15,11 +14,7 @@ interface SidebarState {
   isMobile: boolean;
   sidebarWidth: number;
   isOpen: boolean;
-  closedSections: {
-    [key: string]: boolean;
-  };
   toggleSidebar: () => void;
-  toggleSection: (id: string) => () => void;
   useDragSidebar: () => any;
   useDragMain: () => any;
   useSidebarLayout: () => any;
@@ -33,15 +28,9 @@ const [useSidebar] = create<SidebarState>(
       isMobile: true,
       sidebarWidth: 0,
       isOpen: false,
-      closedSections: {},
       toggleSidebar: () => {
         set((state: SidebarState) => {
           state.isOpen = !state.isOpen;
-        });
-      },
-      toggleSection: (id: string) => () => {
-        set((state: SidebarState) => {
-          state.closedSections[id] = !state.closedSections[id];
         });
       },
       useSidebarStyle: () => {
@@ -68,7 +57,6 @@ const [useSidebar] = create<SidebarState>(
             state.sidebarWidth = isMobile ? width : DEFAULT_WIDTH;
             state.isMobile = isMobile;
             state.isOpen = persistedState.isOpen;
-            state.closedSections = persistedState.closedSections;
           });
         });
       },
@@ -90,14 +78,15 @@ const [useSidebar] = create<SidebarState>(
   )
 );
 
-function Sidebar({ style }: AnimatedProps<{ style: object }>) {
+function Sidebar() {
   const {
-    closedSections,
+    sidebarWidth,
     toggleSidebar,
-    toggleSection,
-    useDragSidebar
+    useDragSidebar,
+    useSidebarStyle
   } = useSidebar();
 
+  const styles = useSidebarStyle();
   const bindSidebar = useDragSidebar();
 
   return (
@@ -105,7 +94,8 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
       {...bindSidebar()}
       className="fixed top-0 left-0 h-full text-white py-12 px-6 overflow-x-scroll overflow-y-scroll scrolling-touch"
       style={{
-        ...style,
+        ...styles,
+        width: sidebarWidth,
         backgroundColor: "#121212"
       }}
     >
@@ -113,46 +103,7 @@ function Sidebar({ style }: AnimatedProps<{ style: object }>) {
         Close
       </button>
 
-      <Section
-        isOpen={!closedSections["1"]}
-        toggleSection={toggleSection("1")}
-      />
-      <Section
-        isOpen={!closedSections["2"]}
-        toggleSection={toggleSection("2")}
-      />
-      <Section
-        isOpen={!closedSections["3"]}
-        toggleSection={toggleSection("3")}
-      />
-      <Section
-        isOpen={!closedSections["4"]}
-        toggleSection={toggleSection("4")}
-      />
-      <Section
-        isOpen={!closedSections["5"]}
-        toggleSection={toggleSection("5")}
-      />
-      <Section
-        isOpen={!closedSections["6"]}
-        toggleSection={toggleSection("6")}
-      />
-      <Section
-        isOpen={!closedSections["7"]}
-        toggleSection={toggleSection("7")}
-      />
-      <Section
-        isOpen={!closedSections["8"]}
-        toggleSection={toggleSection("8")}
-      />
-      <Section
-        isOpen={!closedSections["9"]}
-        toggleSection={toggleSection("9")}
-      />
-      <Section
-        isOpen={!closedSections["10"]}
-        toggleSection={toggleSection("10")}
-      />
+      <p>Sidebar</p>
     </animated.div>
   );
 }
