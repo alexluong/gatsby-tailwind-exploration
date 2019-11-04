@@ -1,100 +1,74 @@
-import React from "react";
+import React, { useState, useContext, createContext } from "react";
 import create from "zustand";
 import { useDrag } from "react-use-gesture";
 import { useSpring, animated, to } from "react-spring";
-import { useLocalStorage, useMount, useWindowSize } from "react-use";
-import { persist, immer } from "../../utils/zustand";
+import { useLocalStorage, useWindowSize } from "react-use";
+
+import { Context } from "../Context";
 
 const LS_KEY = "sidebarState";
 const DEFAULT_WIDTH = 280;
 const V_THRESHOLD = 0.15; // velocity --> how fast the swipe is
 const D_THRESHOLD = 0.6; // direction --> how straight the swipe is
 
-interface SidebarState {
-  isMobile: boolean;
-  sidebarWidth: number;
-  isOpen: boolean;
-  toggleSidebar: () => void;
-  useDragSidebar: () => any;
-  useDragMain: () => any;
-  useSidebarLayout: () => any;
-  useSidebarStyle: () => any;
-  useMainStyle: () => any;
-}
+const useSidebar = () => {
+  const [persistedState] = useLocalStorage<{ isOpen: boolean }>(LS_KEY);
+  const [isOpen, setIsOpen] = useState(false);
+  const { width } = useWindowSize();
+  const [isMobile, setIsMobile] = useState(width < 768);
+  const [sidebarWidth, setSidebarWidth] = useState(isMobile ? width : DEFAULT_WIDTH);
+  const sidebarStyle = useSpring({
+    translate: [isOpen ? 0 : -100]
+  });
+  const toggleSidebar = () => setIsOpen(!isOpen);
+  const mainStyle = useSpring({
+    marginLeft: isMobile ? 0 : isOpen ? sidebarWidth : 0
+  });
+  const dragSidebar = useDrag(({ direction, velocity, last }) => {
+    if (direction[0] < -D_THRESHOLD && last && velocity > V_THRESHOLD) {
+      toggleSidebar();
+    }
+  });
 
-const [useSidebar] = create<SidebarState>(
-  persist(LS_KEY)(
-    immer((set, get) => ({
-      isMobile: true,
-      sidebarWidth: 0,
-      isOpen: false,
-      toggleSidebar: () => {
-        set((state: SidebarState) => {
-          state.isOpen = !state.isOpen;
-        });
-      },
-      useSidebarStyle: () => {
-        const { translate } = useSpring({
-          translate: [get().isOpen ? 0 : -100]
-        });
-        return {
-          transform: to(translate, x => `translateX(${x}%)`)
-        };
-      },
-      useMainStyle: () => {
-        const { isMobile, isOpen, sidebarWidth } = get();
-        return useSpring({
-          marginLeft: isMobile ? 0 : isOpen ? sidebarWidth : 0
-        });
-      },
-      useSidebarLayout: () => {
-        const [persistedState] = useLocalStorage<SidebarState>(LS_KEY);
-        const { width } = useWindowSize();
-        const isMobile = width < 500;
+  const dragMain = useDrag(({ direction, velocity, last }) => {
+    if (direction[0] > D_THRESHOLD && last && velocity > V_THRESHOLD) {
+      toggleSidebar();
+    }
+  });
+  const style = {
+    transform: to(sidebarStyle.translate, x => `translateX(${x}%)`)
+  };
 
-        useMount(() => {
-          set((state: SidebarState) => {
-            state.sidebarWidth = isMobile ? width : DEFAULT_WIDTH;
-            state.isMobile = isMobile;
-            state.isOpen = persistedState ? persistedState.isOpen : false;
-          });
-        });
-      },
-      useDragSidebar: () => {
-        return useDrag(({ direction, velocity, last }) => {
-          if (direction[0] < -D_THRESHOLD && last && velocity > V_THRESHOLD) {
-            get().toggleSidebar();
-          }
-        });
-      },
-      useDragMain: () => {
-        return useDrag(({ direction, velocity, last }) => {
-          if (direction[0] > D_THRESHOLD && last && velocity > V_THRESHOLD) {
-            get().toggleSidebar();
-          }
-        });
-      }
-    }))
-  )
-);
+  React.useEffect(() => {
+    localStorage.setItem(LS_KEY, JSON.stringify({ isOpen }));
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    setIsOpen(persistedState ? persistedState.isOpen : false);
+  }, [setIsOpen, persistedState]);
+
+  return {
+    toggleSidebar,
+    isOpen,
+    sidebarWidth,
+    style,
+    mainStyle,
+    dragSidebar,
+    dragMain
+  };
+};
 
 function Sidebar() {
-  const {
-    sidebarWidth,
-    toggleSidebar,
-    useDragSidebar,
-    useSidebarStyle
-  } = useSidebar();
+  const { style, toggleSidebar, dragSidebar, sidebarWidth, isOpen } = useContext(Context);
 
-  const styles = useSidebarStyle();
-  const bindSidebar = useDragSidebar();
+  console.log({ isOpen });
 
   return (
     <animated.div
-      {...bindSidebar()}
-      className="fixed top-0 left-0 h-full text-white py-12 px-6 overflow-x-scroll overflow-y-scroll scrolling-touch"
+      {...dragSidebar()}
+      className="fixed top-0 left-0 h-full text-white py-12 px-6 overflow-x-scroll overflow-y-scroll scrolling-touch sm:w-screen md:w-64"
       style={{
-        ...styles,
+        ...style,
         width: sidebarWidth,
         backgroundColor: "#121212"
       }}
