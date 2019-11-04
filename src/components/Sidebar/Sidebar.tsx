@@ -1,7 +1,7 @@
 import React from "react";
 import create from "zustand";
 import { useDrag } from "react-use-gesture";
-import { useSpring, animated, AnimatedProps, to } from "react-spring";
+import { useSpring, animated, to } from "react-spring";
 import { useLocalStorage, useMount, useWindowSize } from "react-use";
 import { persist, immer } from "../../utils/zustand";
 
@@ -56,7 +56,7 @@ const [useSidebar] = create<SidebarState>(
           set((state: SidebarState) => {
             state.sidebarWidth = isMobile ? width : DEFAULT_WIDTH;
             state.isMobile = isMobile;
-            state.isOpen = persistedState.isOpen;
+            state.isOpen = persistedState ? persistedState.isOpen : false;
           });
         });
       },
